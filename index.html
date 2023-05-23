@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Customer and Wait Time Display</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      /* Style rules for yo deck screen */
+      html
+      {
+        
+        background-color: #eeeeee;
+       
+        }
+
+
+    
+
+      #sidebar {
+        width: 80%;
+        height: 100%;
+     align-self: left;
+        padding: 1.5em;
+       ;
+        text-align: center ;
+        background-color: #ffffff;
+        border-width: 5px;
+        border-style: solid;
+
+      }
+
+      #customer-count,
+      #wait-time {
+        font-size: 2em;
+        font-weight: bold;
+      }
+
+      h2 {
+        font-size: 1.5em;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+  
+        <div id="sidebar">
+          <h2>Currently Serving:</h2>
+          <p id="customer-count">0</p>
+          <h2>Estimated Wait Time:</h2>
+          <p id="wait-time">0 minutes</p>
+        </div>
+  
+    <script>
+      // JavaScript code for yo deck screen
+      const customerCountElement = document.getElementById("customer-count");
+      const waitTimeElement = document.getElementById("wait-time");
+
+      function updateCustomerData() {
+        // Retrieve the latest customer data from the Power Automate flow via an HTTP GET request
+        fetch("https://prod-35.westus.logic.azure.com:443/workflows/9a1f0f9260814304b325e8a51597890a/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=1Anw0oT8_xlnF453WH0bTgFvZqtceHp4sGDcIzTlN4U")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            // Update the customer count and wait time elements with the latest data
+            customerCountElement.textContent = data.waiting;
+            waitTimeElement.textContent = data.Time + " minutes";
+          })
+          .catch((error) => {
+            console.error("There was a problem retrieving the customer data:", error);
+            alert("There was a problem retrieving the customer data. Please try again later.");
+          });
+      }
+
+   
+
+      // Update the customer data every 15 minutes
+      updateCustomerData();
+      setInterval(updateCustomerData, 300000); // 15 minutes in milliseconds
+    </script>
+  </body>
+</html>
+

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Customer Wait Time Tracker</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      /* Style rules for service tech page */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 2em;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 2.5em;
+        margin-top: 0;
+      }
+
+      form {
+        width: 100%;
+        max-width: 600px;
+        padding: 2em;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        text-align: center;
+        background-color: #fff;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      input[type="text"],
+      input[type="number"] {
+        display: block;
+        width: 100%;
+        margin-top: 1em;
+        margin-bottom: 1em;
+        padding: 0.5em;
+        font-size: 1em;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+      }
+
+      input[type="submit"] {
+        display: block;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        padding: 0.5em;
+        font-size: 1em;
+        font-weight: bold;
+        border-radius: 4px;
+        border: none;
+        background-color: #007bff;
+        color: #fff;
+        cursor: pointer;
+      }
+
+      table {
+        width: 100%;
+        max-width: 600px;
+        margin-top: 2em;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 0.5em;
+        text-align: center;
+        border: 1px solid #ccc;
+      }
+
+      th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+      }
+
+      caption {
+        margin-bottom: 1em;
+        font-size: 1.5em;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Customer Wait Time Tracker</h1>
+      <form id="customer-form">
+        <label for="customer-name">Customer Count:</label>
+        <input type="text" id="customer-name" name="customer-name" required>
+        <label for="wait-time">Wait Time (minutes):</label>
+        <input type="number" id="wait-time" name="wait-time" required>
+        <input type="submit" value="Submit">
+      </form>
+      <table id="wait-time-table">
+        <caption>Wait Time History</caption>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Customer Count</th>
+            <th>Wait Time (minutes)</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+<script>
+  // JavaScript code for service tech page
+  const customerForm = document.getElementById("customer-form");
+  const waitTimeTable = document.getElementById("wait-time-table").getElementsByTagName("tbody")[0];
+// Function to populate the wait time table with data
+function populateTable(data) {
+data.forEach((waitTime) => {
+const newRow = waitTimeTable.insertRow();
+const DateCell = newRow.insertCell();
+const customerCell = newRow.insertCell();
+const waitTimeCell = newRow.insertCell();
+DateCell.textContent = waitTime.Date;
+customerCell.textContent = waitTime.ServiceCount;
+waitTimeCell.textContent = waitTime.WaitTime_Min;
+});
+}
+
+// Add event listener for form submission
+customerForm.addEventListener("submit", (event) => {
+event.preventDefault();
+// Get the customer name and wait time from the form
+const customerName = document.getElementById("customer-name").value;
+const waitTime = document.getElementById("wait-time").value;
+
+// Clear the form
+customerForm.reset();
+
+// Send the customer data to the Power Automate flow via an HTTP POST request
+fetch("https://prod-52.westus.logic.azure.com:443/workflows/e3faadfb14d445bf9b5e08e42f76f08c/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=OEb29RDR5G7d4jNboq3xenshcgw2gLE6RjsB9K38SDs", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      "customerName": customerName,
+      "waitTime": waitTime
+    })
+  })
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+    return response.json();
+  })
+  .then((data) => {
+    console.log("Customer data successfully sent to Power Automate flow:", data);
+
+    // Clear the wait time table
+    waitTimeTable.innerHTML = "";
+
+    // Fetch the wait time history from the Power Automate flow via an HTTP GET request
+    fetch("https://my-power-automate-flow.com/api/wait-times")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Wait time history retrieved from Power Automate flow:", data);
+        populateTable(data);
+      })
+      .catch((error) => {
+        console.error("There was a problem retrieving the wait time history from the Power Automate flow:", error);
+        alert("There was a problem retrieving the wait time history from the Power Automate flow. Please try again later.");
+      });
+  })
+  .catch((error) => {
+    console.error("There was a problem sending the customer data to the Power Automate flow:", error);
+    alert("There was a problem sending the customer data to the Power Automate flow. Please try again later.");
+  });
+});
+
+// Initialize the wait time table with data on page load
+fetch("https://prod-58.westus.logic.azure.com:443/workflows/a0e171f1214b462b865a169dd21d5aa7/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=n_Am8cgLb-GWcV7KXxLMakNF6X7wPkBbjcAkl0PTEpw")
+.then((response) => {
+if (!response.ok) {
+throw new Error("Network response was not ok");
+}
+return response.json();
+})
+.then((data) => {
+console.log("Wait time history retrieved from Power Automate flow:", data);
+populateTable(data);
+})
+.catch((error) => {
+console.error("There was a problem retrieving the wait time history from the Power Automate flow:", error);
+alert("There was a problem retrieving the wait time history from the Power Automate flow. Please try again later.");
+});
+</script>
+
+</body>
+</html>
