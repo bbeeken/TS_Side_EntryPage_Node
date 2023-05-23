@@ -13,9 +13,9 @@ RUN npm install --production
 # If you are building your code for production
 # RUN npm ci --omit=dev
 
-EXPOSE 3039
 
-ENV PORT="3033"
+
+ENV PORT="3039"
 
 
 # Bundle app source
